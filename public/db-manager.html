@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRM DB Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .sidebar { background: #2c3e50; min-height: 100vh; color: white; padding-top: 20px; }
+        .table-list-item { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #34495e; transition: 0.3s; }
+        .table-list-item:hover { background: #34495e; }
+        .table-list-item.active { background: #3498db; border-left: 5px solid #fff; }
+        .content { padding: 30px; }
+        .sql-editor { font-family: monospace; background: #1e1e1e; color: #dcdcdc; border-radius: 5px; padding: 15px; width: 100%; height: 100px; border: none; margin-bottom: 10px; }
+        .table-container { background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow-x: auto; }
+        .badge-table { font-size: 0.8rem; margin-right: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar">
+                <h5 class="px-3 mb-4"><i class="bi bi-database"></i> SQLite Manager</h5>
+                <div id="table-list">
+                    <div class="text-center py-3"><div class="spinner-border spinner-border-sm text-light"></div></div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10 content">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 id="current-table-title">Chọn một bảng để xem dữ liệu</h2>
+                    <button class="btn btn-outline-danger btn-sm" onclick="location.reload()"><i class="bi bi-arrow-clockwise"></i> Làm mới</button>
+                </div>
+
+                <!-- Query Runner -->
+                <div class="card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white"><strong>Run Custom SQL Query</strong></div>
+                    <div class="card-body">
+                        <textarea id="sql-query" class="sql-editor" placeholder="VD: SELECT * FROM employees WHERE department = 'Tổ 1'"></textarea>
+                        <button class="btn btn-primary" onclick="runCustomQuery()">Thực thi (Run Query)</button>
+                    </div>
+                </div>
+
+                <!-- Data Table -->
+                <div id="data-display" class="table-container">
+                    <div class="p-5 text-center text-muted">Dữ liệu sẽ hiển thị tại đây</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTable = '';
+
+        async function loadTables() {
+            const res = await fetch('/api/admin/tables');
+            const tables = await res.json();
+            const list = document.getElementById('table-list');
+            list.innerHTML = tables.map(t => `
+                <div class="table-list-item" onclick="viewTable('${t}', this)">
+                    <span class="badge bg-secondary badge-table">TBL</span> ${t}
+                </div>
+            `).join('');
+        }
+
+        async function viewTable(tableName, element) {
+            currentTable = tableName;
+            document.querySelectorAll('.table-list-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            document.getElementById('current-table-title').innerText = `Dữ liệu bảng: ${tableName}`;
+            
+            const res = await fetch(`/api/admin/table/${tableName}`);
+            const data = await res.json();
+            renderTable(data);
+        }
+
+        function renderTable(data) {
+            const display = document.getElementById('data-display');
+            if (data.length === 0) {
+                display.innerHTML = '<div class="p-5 text-center text-muted">Bảng này hiện chưa có dữ liệu.</div>';
+                return;
+            }
+
+            const headers = Object.keys(data[0]);
+            let html = `<table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+                </thead>
+                <tbody>
+                    ${data.map(row => `
+                        <tr>${headers.map(h => `<td>${row[h] !== null ? row[h] : '<em class="text-muted">null</em>'}</td>`).join('')}</tr>
+                    `).join('')}
+                </tbody>
+            </table>`;
+            display.innerHTML = html;
+        }
+
+        async function runCustomQuery() {
+            const sql = document.getElementById('sql-query').value;
+            if (!sql.trim()) return alert('Vui lòng nhập câu lệnh SQL');
+
+            try {
+                const res = await fetch('/api/admin/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sql })
+                });
+                const data = await res.json();
+                
+                if (data.error) {
+                    alert('Lỗi: ' + data.error);
+                } else if (Array.isArray(data)) {
+                    renderTable(data);
+                    document.getElementById('current-table-title').innerText = 'Kết quả truy vấn (Query Results)';
+                } else {
+                    alert(`Thành công! Thay đổi: ${data.changes}, Last ID: ${data.lastID}`);
+                    if (currentTable) viewTable(currentTable, document.querySelector('.table-list-item.active'));
+                }
+            } catch (err) {
+                alert('Lỗi kết nối server');
+            }
+        }
+
+        window.onload = loadTables;
+    </script>
+</body>
+</html>

@@ -124,6 +124,38 @@ app.post('/api/documents', upload.single('file'), (req, res) => {
     );
 });
 
+// Database Management Routes (Admin Only)
+app.get('/api/admin/tables', (req, res) => {
+    db.all("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows.map(r => r.name));
+    });
+});
+
+app.post('/api/admin/query', (req, res) => {
+    const { sql, params } = req.body;
+    const action = sql.trim().split(' ')[0].toUpperCase();
+    
+    if (action === 'SELECT') {
+        db.all(sql, params || [], (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(rows);
+        });
+    } else {
+        db.run(sql, params || [], function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ changes: this.changes, lastID: this.lastID });
+        });
+    }
+});
+
+app.get('/api/admin/table/:name', (req, res) => {
+    db.all(`SELECT * FROM ${req.params.name}`, [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
 // Dashboard Stats
 app.get('/api/stats', (req, res) => {
     const stats = {};
