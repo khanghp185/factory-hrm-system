@@ -19,6 +19,19 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Routes
 // We'll create separate route files later, but for now, let's add some basic endpoints
 
+// Auth Routes
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+    db.get("SELECT id, full_name, role FROM employees WHERE username = ? AND password = ?", [username, password], (err, user) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (user) {
+            res.json({ success: true, user });
+        } else {
+            res.status(401).json({ success: false, message: "Sai tên đăng nhập hoặc mật khẩu" });
+        }
+    });
+});
+
 // Employee Routes
 app.get('/api/employees', (req, res) => {
     db.all("SELECT * FROM employees", [], (err, rows) => {

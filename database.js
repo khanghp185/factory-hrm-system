@@ -20,8 +20,21 @@ function initializeTables() {
             position TEXT,
             department TEXT,
             status TEXT DEFAULT 'Đang làm việc',
-            join_date DATE
-        )`);
+            join_date DATE,
+            username TEXT UNIQUE,
+            password TEXT,
+            role TEXT DEFAULT 'employee'
+        )`, () => {
+            // Seed default accounts if empty
+            db.get("SELECT COUNT(*) as count FROM employees", (err, row) => {
+                if (row && row.count === 0) {
+                    db.run("INSERT INTO employees (full_name, position, department, join_date, username, password, role) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        ['Hệ thống Admin', 'Quản trị', 'HR', '2026-05-19', 'admin', '123456', 'admin']);
+                    db.run("INSERT INTO employees (full_name, position, department, join_date, username, password, role) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        ['Nhân viên mẫu', 'Công nhân', 'Tổ 1', '2026-05-19', 'nhanvien', '123456', 'employee']);
+                }
+            });
+        });
 
         // Shifts table
         db.run(`CREATE TABLE IF NOT EXISTS shifts (

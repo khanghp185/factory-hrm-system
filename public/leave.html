@@ -14,11 +14,17 @@
     </style>
 </head>
 <body>
+    <script src="js/auth.js"></script>
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
             <nav class="col-md-2 d-none d-md-block sidebar py-4">
                 <h4 class="text-center mb-4">Factory HRM</h4>
+                <div class="px-3 mb-4 text-center">
+                    <div class="small text-muted">Xin chào,</div>
+                    <div id="user-display" class="fw-bold text-white">Guest</div>
+                    <button onclick="logout()" class="btn btn-sm btn-outline-danger mt-2 w-100">Đăng xuất</button>
+                </div>
                 <a href="index.html"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
                 <a href="employees.html"><i class="bi bi-people me-2"></i> Nhân viên</a>
                 <a href="schedule.html"><i class="bi bi-calendar3 me-2"></i> Lịch làm việc</a>
