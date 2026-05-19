@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factory HRM - Lịch làm việc</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .sidebar { min-height: 100vh; background-color: #212529; color: white; }
+        .sidebar a { color: #adb5bd; text-decoration: none; padding: 10px 20px; display: block; }
+        .sidebar a:hover, .sidebar a.active { color: white; background-color: #343a40; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-2 d-none d-md-block sidebar py-4">
+                <h4 class="text-center mb-4">Factory HRM</h4>
+                <a href="index.html"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
+                <a href="employees.html"><i class="bi bi-people me-2"></i> Nhân viên</a>
+                <a href="schedule.html" class="active"><i class="bi bi-calendar3 me-2"></i> Lịch làm việc</a>
+                <a href="leave.html"><i class="bi bi-briefcase me-2"></i> Nghỉ phép</a>
+                <a href="documents.html"><i class="bi bi-file-earmark-text me-2"></i> Tài liệu</a>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="col-md-10 ms-sm-auto px-md-4 py-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Phân công Lịch làm việc</h1>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addScheduleModal">
+                        <i class="bi bi-calendar-plus"></i> Phân ca mới
+                    </button>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nhân viên</th>
+                                    <th>Ca làm</th>
+                                    <th>Ngày làm việc</th>
+                                    <th>Loại</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="schedule-list">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Add Schedule Modal -->
+    <div class="modal fade" id="addScheduleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Phân công ca làm việc</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addScheduleForm">
+                        <div class="mb-3">
+                            <label class="form-label">Chọn nhân viên</label>
+                            <select class="form-select" name="employee_id" id="select-employee" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Chọn ca làm</label>
+                            <select class="form-select" name="shift_id" id="select-shift" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Ngày làm việc</label>
+                            <input type="date" class="form-control" name="work_date" required>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" name="is_backup" id="is_backup">
+                            <label class="form-check-label" for="is_backup">Là nhân sự dự phòng</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Lưu phân công</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function loadFormData() {
+            // Load Employees
+            const empRes = await fetch('/api/employees');
+            const employees = await empRes.json();
+            document.getElementById('select-employee').innerHTML = employees.map(e => 
+                `<option value="${e.id}">${e.full_name} (${e.department})</option>`
+            ).join('');
+
+            // Load Shifts
+            const shiftRes = await fetch('/api/shifts');
+            const shifts = await shiftRes.json();
+            document.getElementById('select-shift').innerHTML = shifts.map(s => 
+                `<option value="${s.id}">${s.shift_name} (${s.start_time} - ${s.end_time})</option>`
+            ).join('');
+        }
+
+        async function fetchSchedules() {
+            const res = await fetch('/api/schedules');
+            const data = await res.json();
+            const tbody = document.getElementById('schedule-list');
+            tbody.innerHTML = data.map(s => `
+                <tr>
+                    <td>${s.employee_name}</td>
+                    <td>${s.shift_name}</td>
+                    <td>${s.work_date}</td>
+                    <td><span class="badge ${s.is_backup ? 'bg-warning' : 'bg-primary'}">${s.is_backup ? 'Dự phòng' : 'Chính thức'}</span></td>
+                    <td><button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button></td>
+                </tr>
+            `).join('');
+        }
+
+        document.getElementById('addScheduleForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const body = Object.fromEntries(formData.entries());
+            body.is_backup = e.target.is_backup.checked;
+            
+            const res = await fetch('/api/schedules', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('addScheduleModal')).hide();
+                e.target.reset();
+                fetchSchedules();
+            }
+        };
+
+        window.onload = () => {
+            loadFormData();
+            fetchSchedules();
+        };
+    </script>
+</body>
+</html>

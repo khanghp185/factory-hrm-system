@@ -1,0 +1,29 @@
+{
+  "name": "btl",
+  "version": "1.0.0",
+  "description": "Hệ thống quản lý nhân sự chuyên biệt cho mô hình xí nghiệp, tập trung vào việc tối ưu hóa nhân lực, điều phối ca làm việc và quản lý tài liệu vận hành.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/khanghp185/factory-hrm-system.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/khanghp185/factory-hrm-system/issues"
+  },
+  "homepage": "https://github.com/khanghp185/factory-hrm-system#readme",
+  "dependencies": {
+    "body-parser": "^2.2.2",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "morgan": "^1.10.1",
+    "multer": "^2.1.1",
+    "sqlite3": "^6.0.1"
+  }
+}

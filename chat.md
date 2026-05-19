@@ -17,7 +17,11 @@
 - **Lựa chọn ưu tiên:** `factory-hrm`.
 
 ## 3. Các bước tiếp theo
-- [ ] Xác định Stack công nghệ (Frontend/Backend).
-- [ ] Thiết kế Cơ sở dữ liệu (Database Schema).
-- [ ] Phác thảo giao diện (UI/UX).
-- [ ] Khởi tạo khung dự án (Boilerplate).
+- [x] Xác định Stack công nghệ (Frontend/Backend).
+    - **Frontend:** HTML5, CSS3, JavaScript (Vanilla/ES6), Bootstrap 5 (UI Framework).
+    - **Backend:** Node.js + Express (Gọn nhẹ, dễ triển khai).
+    - **Database:** SQLite (File-based, không cần cài đặt server phức tạp).
+- [x] Thiết kế Cơ sở dữ liệu (Database Schema).
+- [x] Phác thảo giao diện (UI/UX).
+- [x] Khởi tạo khung dự án (Boilerplate).
+- [x] Xây dựng hoàn thiện tính năng (Full implementation).
